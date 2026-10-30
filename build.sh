@@ -20,13 +20,13 @@ echo "Assembling boot sector..."
 "$LD" -Ttext 0x7C00 --oformat binary -o "$BUILD_DIR/boot.bin" "$BUILD_DIR/boot.o"
 
 echo "Compiling kernel..."
-"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/kernel.cpp" -o "$BUILD_DIR/kernel.o"
-"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/console.cpp" -o "$BUILD_DIR/console.o"
-"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/keyboard.cpp" -o "$BUILD_DIR/keyboard.o"
-"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/memory.cpp" -o "$BUILD_DIR/memory.o"
+"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/core/kernel.cpp" -o "$BUILD_DIR/kernel.o"
+"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/drivers/console/console.cpp" -o "$BUILD_DIR/console.o"
+"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/drivers/keyboard/keyboard.cpp" -o "$BUILD_DIR/keyboard.o"
+"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/mm/heap.cpp" -o "$BUILD_DIR/heap.o"
 "$LD" -T "$ROOT_DIR/linker/kernel.ld" --oformat binary \
     -o "$BUILD_DIR/kernel.bin" "$BUILD_DIR/kernel.o" \
-    "$BUILD_DIR/console.o" "$BUILD_DIR/keyboard.o" "$BUILD_DIR/memory.o"
+    "$BUILD_DIR/console.o" "$BUILD_DIR/keyboard.o" "$BUILD_DIR/heap.o"
 
 if [ "$(wc -c < "$BUILD_DIR/boot.bin")" -ne 512 ]; then
     echo "Error: boot sector must be exactly 512 bytes." >&2

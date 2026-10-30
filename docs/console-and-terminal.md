@@ -39,7 +39,7 @@ Blinking and bright-background behavior are not configured separately.
 
 ### Console API
 
-Declared in `src/kernel/console.h`:
+Declared in `src/kernel/drivers/console/console.h`:
 
 | Function | Behavior |
 | --- | --- |
@@ -62,7 +62,7 @@ a native keyboard driver.
 
 ### Keyboard API
 
-Declared in `src/kernel/keyboard.h`:
+Declared in `src/kernel/drivers/keyboard/keyboard.h`:
 
 | Function | Behavior |
 | --- | --- |

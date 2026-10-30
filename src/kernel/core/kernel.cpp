@@ -1,6 +1,6 @@
-#include "console.h"
-#include "keyboard.h"
-#include "memory.h"
+#include "../drivers/console/console.h"
+#include "../drivers/keyboard/keyboard.h"
+#include "../mm/heap.h"
 
 static char line[80];
 

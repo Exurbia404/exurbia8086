@@ -24,7 +24,7 @@ coalesces adjacent free blocks on release.
 
 ## API
 
-Declared in `src/kernel/memory.h`:
+Declared in `src/kernel/mm/heap.h`:
 
 | Function | Behavior |
 | --- | --- |

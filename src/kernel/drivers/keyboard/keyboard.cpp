@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "console.h"
+#include "../console/console.h"
 
 char kgetchar() {
     for (;;) {
