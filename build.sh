@@ -23,9 +23,10 @@ echo "Compiling kernel..."
 "$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/kernel.cpp" -o "$BUILD_DIR/kernel.o"
 "$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/console.cpp" -o "$BUILD_DIR/console.o"
 "$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/keyboard.cpp" -o "$BUILD_DIR/keyboard.o"
+"$CC" "${CFLAGS[@]}" -c "$ROOT_DIR/src/kernel/memory.cpp" -o "$BUILD_DIR/memory.o"
 "$LD" -T "$ROOT_DIR/linker/kernel.ld" --oformat binary \
     -o "$BUILD_DIR/kernel.bin" "$BUILD_DIR/kernel.o" \
-    "$BUILD_DIR/console.o" "$BUILD_DIR/keyboard.o"
+    "$BUILD_DIR/console.o" "$BUILD_DIR/keyboard.o" "$BUILD_DIR/memory.o"
 
 if [ "$(wc -c < "$BUILD_DIR/boot.bin")" -ne 512 ]; then
     echo "Error: boot sector must be exactly 512 bytes." >&2

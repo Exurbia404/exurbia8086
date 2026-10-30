@@ -23,6 +23,10 @@ The console API is declared in `src/kernel/console.h` (`kputchar`, `kputs`,
 The console uses 80x25 VGA text memory; keyboard input currently uses BIOS
 interrupt `0x16`.
 
+The kernel also has a fixed 16 KiB first-fit heap with `kmalloc`/`kfree`.
+See [`docs/memory-management.md`](docs/memory-management.md) for its API,
+layout, and current limitations.
+
 Enter `exit` on its own line to shut down the QEMU process. See
 [`docs/console-and-terminal.md`](docs/console-and-terminal.md) for the full
 feature guide, API behavior, and current limitations.
@@ -30,8 +34,8 @@ feature guide, API behavior, and current limitations.
 ## Project layout
 
 - `src/boot/` contains the BIOS boot sector.
-- `src/kernel/` contains the freestanding kernel, VGA console, and keyboard
-  input driver.
+- `src/kernel/` contains the freestanding kernel and its VGA console, keyboard
+  input driver, and heap allocator.
 - `docs/` contains feature and API documentation.
 - `linker/` contains linker scripts.
 - `build.sh` assembles, links, creates the disk image, and launches QEMU.
