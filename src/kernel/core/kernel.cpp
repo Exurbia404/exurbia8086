@@ -1,6 +1,6 @@
 #include "../drivers/console/console.h"
-#include "../drivers/keyboard/keyboard.h"
 #include "../mm/heap.h"
+#include "../syscall/syscall.h"
 
 static char line[80];
 
@@ -68,21 +68,52 @@ static void halt_system() {
         __asm__ volatile ("cli\n\thlt");
 }
 
-static void exit_system() {
-#ifdef EXURBIA_QEMU
-    __asm__ volatile (
-        "outb %0, %1"
-        :
-        : "a"(static_cast<unsigned char>(0x10)), "Nd"(0x00F4)
-    );
-#endif
+static void fail(const char* message) {
+    ksetcolor(12, 0);
+    kputs(message);
     halt_system();
+}
+
+static void syscall_self_test() {
+    static const char message[] = "System call interface ready.\n";
+    char input;
+
+    if (syscall_write(
+            1, reinterpret_cast<unsigned short>(message), sizeof(message) - 1
+        ) != sizeof(message) - 1)
+        fail("System call write failed.\n");
+    if (syscall_write(
+            3, reinterpret_cast<unsigned short>(message), 1
+        ) != SYS_ERROR_BAD_FILE_DESCRIPTOR)
+        fail("System call descriptor validation failed.\n");
+    if (syscall_read(
+            1, reinterpret_cast<unsigned short>(&input), 1
+        ) != SYS_ERROR_BAD_FILE_DESCRIPTOR)
+        fail("System call read validation failed.\n");
+    if (syscall_read(0, 0, 1) != SYS_ERROR_INVALID_ARGUMENT ||
+        syscall_write(1, 0, 1) != SYS_ERROR_INVALID_ARGUMENT ||
+        syscall_write(1, 0xFFFE, 2) !=
+            SYS_ERROR_INVALID_ARGUMENT)
+        fail("System call argument validation failed.\n");
+    if (syscall_open(reinterpret_cast<unsigned short>(""), 0) !=
+            SYS_ERROR_NOT_IMPLEMENTED ||
+        syscall_close(0) != SYS_ERROR_NOT_IMPLEMENTED ||
+        syscall_fork() != SYS_ERROR_NOT_IMPLEMENTED)
+        fail("Unsupported system call handling failed.\n");
+
+    ksetcolor(10, 0);
+    kputs("System call self-test passed.\n");
+    ksetcolor(15, 0);
 }
 
 extern "C" __attribute__((section(".text.start"))) void _start() {
     console_init();
     if (!memory_init()) {
         kputs("Memory initialization failed.\n");
+        halt_system();
+    }
+    if (!syscall_init()) {
+        kputs("System call initialization failed.\n");
         halt_system();
     }
 
@@ -108,25 +139,62 @@ extern "C" __attribute__((section(".text.start"))) void _start() {
     ksetcolor(10, 0);
     kputs("Memory allocator self-test passed.\n");
 #endif
+    syscall_self_test();
 
     while (1) {
         ksetcolor(11, 0);
-        kputs("\n> ");
+        short prompt_result = syscall_write(
+            1, reinterpret_cast<unsigned short>("\n> "), 3
+        );
+        if (prompt_result != 3) {
+            if (prompt_result == SYS_ERROR_BAD_FILE_DESCRIPTOR)
+                fail("System call prompt has a bad descriptor.\n");
+            if (prompt_result == SYS_ERROR_INVALID_ARGUMENT)
+                fail("System call prompt has invalid arguments.\n");
+            fail("System call prompt returned an unexpected result.\n");
+        }
         ksetcolor(15, 0);
-        unsigned short length = kgetline(line, sizeof(line));
+        short bytes_read = syscall_read(
+            0, reinterpret_cast<unsigned short>(line), sizeof(line)
+        );
+        if (bytes_read < 0)
+            fail("System call read failed.\n");
+        unsigned short length = static_cast<unsigned short>(bytes_read);
+        if (length && line[length - 1] == '\n')
+            --length;
+        line[length] = '\0';
+
         if (is_exit_command(line, length)) {
-            ksetcolor(10, 0);
-            kputs("Exiting.\n");
-            exit_system();
+            if (syscall_write(
+                    1, reinterpret_cast<unsigned short>("Exiting.\n"), 9
+                ) != 9)
+                fail("System call exit message write failed.\n");
+            syscall_exit(0);
         }
 
         ksetcolor(10, 0);
-        kputs("You typed: ");
-        kputs(line);
+        short prefix_result = syscall_write(
+            1, reinterpret_cast<unsigned short>("You typed: "), 11
+        );
+        short line_result = syscall_write(
+            1, reinterpret_cast<unsigned short>(line), length
+        );
+        if (prefix_result != 11 || line_result != static_cast<short>(length))
+            fail("System call response write failed.\n");
         ksetcolor(8, 0);
         kputs(" (");
         print_unsigned(length);
         kputs(" chars)");
+        short newline_result = syscall_write(
+            1, reinterpret_cast<unsigned short>("\n"), 1
+        );
+        if (newline_result != 1) {
+            if (newline_result == SYS_ERROR_BAD_FILE_DESCRIPTOR)
+                fail("System call newline has a bad descriptor.\n");
+            if (newline_result == SYS_ERROR_INVALID_ARGUMENT)
+                fail("System call newline has invalid arguments.\n");
+            fail("System call newline returned an unexpected result.\n");
+        }
         ksetcolor(15, 0);
     }
 }

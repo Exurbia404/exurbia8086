@@ -15,7 +15,7 @@ static inline void write_cell(uint16_t position, uint16_t value) {
         "movw %0, %%es:(%%di)"
         :
         : "r"(value), "D"(position * 2)
-        : "ax", "memory"
+        : "ax", "es", "memory"
     );
 }
 
@@ -27,7 +27,7 @@ static inline uint16_t read_cell(uint16_t position) {
         "movw %%es:(%%di), %0"
         : "=r"(value)
         : "D"(position * 2)
-        : "ax", "memory"
+        : "ax", "es", "memory"
     );
     return value;
 }
