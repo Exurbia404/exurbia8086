@@ -6,16 +6,16 @@ map, provide virtual memory, or isolate processes.
 
 ## Physical layout
 
-The current boot sector always reads eight sectors (4096 bytes) to physical
-address `0x1000`. The allocator therefore reserves the 16 KiB range
-`0x2000`–`0x5FFF` for its heap, immediately after the entire possible kernel
-load region. The heap ends at `0x6000`.
+The boot sector reads sixteen sectors (8192 bytes) to physical address
+`0x1000`, so the kernel image ends no later than `0x3000`. The linker also
+checks that the kernel's zero-initialized data ends before `0x4000`. The
+allocator reserves `0x4000`–`0x6FFF` for a 12 KiB heap. Process stacks occupy
+`0x7000`–`0x75FF`.
 
-The boot stack starts at `0x7C00` and grows down. This layout leaves a 7 KiB
-gap between the heap and the initial stack pointer. It assumes conventional
-memory is present through `0x6000`, as on the intended PC-compatible target.
-The fixed range is a temporary boot-time memory map, not a BIOS-reported memory
-map. Stack growth beyond the reserved gap could collide with the heap.
+The boot stack starts at `0x7C00` and grows down, leaving a gap after the
+process stacks. This fixed layout assumes conventional memory is present
+through `0x7C00`, as on the intended PC-compatible target. It is not a
+BIOS-reported memory map, and process or boot stack growth is not guarded.
 
 Each heap block has a four-byte header containing its payload size and state.
 The header lives in the heap itself. Returned allocations are two-byte aligned.
@@ -58,6 +58,6 @@ payload access, reuse of a freed block, double-free rejection, coalescing, and
 recovery of the largest allocation. It reports the result on the console.
 
 This heap is intentionally fixed and small. A future memory-management step
-should query the BIOS memory map, reserve firmware/device regions and the
-active stack explicitly, and define ownership once kernel loading and process
-memory are introduced.
+should query the BIOS memory map, reserve firmware/device regions and active
+stacks explicitly, and define ownership once separate process memory is
+introduced.

@@ -2,8 +2,8 @@
 
 typedef unsigned short uint16_t;
 
-static const uint16_t heap_start = 0x2000;
-static const uint16_t heap_end = 0x6000;
+static const uint16_t heap_start = 0x4000;
+static const uint16_t heap_end = 0x7000;
 static const uint16_t block_free = 0xFEE1;
 static const uint16_t block_used = 0xA110;
 

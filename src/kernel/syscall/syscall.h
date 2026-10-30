@@ -7,7 +7,8 @@ enum SystemCallNumber {
     SYS_OPEN = 2,
     SYS_CLOSE = 3,
     SYS_EXIT = 4,
-    SYS_FORK = 5
+    SYS_FORK = 5,
+    SYS_YIELD = 6
 };
 
 enum SystemCallError {
@@ -42,6 +43,7 @@ short syscall_write(
 short syscall_open(unsigned short path_offset, unsigned short flags);
 short syscall_close(unsigned short file_descriptor);
 short syscall_fork();
+short syscall_yield();
 void syscall_exit(unsigned short status);
 
 extern "C" short syscall_dispatch_frame(SystemCallFrame* frame);
