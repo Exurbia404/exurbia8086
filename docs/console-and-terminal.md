@@ -76,11 +76,12 @@ uses an 80-byte buffer, allowing up to 79 characters per line.
 
 ## Exit behavior
 
-The `exit` command is recognized only when it is the entire submitted line. In
-the QEMU build, the kernel writes value `0x10` to QEMU's `isa-debug-exit` device
-at I/O port `0xF4`; `build.sh` attaches that device so QEMU closes when
-requested. QEMU reports this guest exit as host status `33`, which the build
-script recognizes as a successful guest shutdown.
+The `exit` command is recognized only when it is the entire submitted line.
+The kernel invokes the `SYS_EXIT` system call. In the QEMU build, that call
+writes value `0x10` to QEMU's `isa-debug-exit` device at I/O port `0xF4`;
+`build.sh` attaches that device so QEMU closes when requested. QEMU reports
+this guest exit as host status `33`, which the build script recognizes as a
+successful guest shutdown. See [system-calls.md](system-calls.md) for details.
 
 This is emulator-specific: real hardware has no host QEMU process for the
 kernel to close. When built without the `EXURBIA_QEMU` option, `exit` halts the

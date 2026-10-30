@@ -27,6 +27,10 @@ The kernel also has a fixed 16 KiB first-fit heap with `kmalloc`/`kfree`.
 See [`docs/memory-management.md`](docs/memory-management.md) for its API,
 layout, and current limitations.
 
+The kernel has an `int 0x80` system-call interface for console read/write and
+exit. See [`docs/system-calls.md`](docs/system-calls.md) for the ABI and
+implemented calls.
+
 Enter `exit` on its own line to shut down the QEMU process. See
 [`docs/console-and-terminal.md`](docs/console-and-terminal.md) for the full
 feature guide, API behavior, and current limitations.
@@ -38,6 +42,7 @@ feature guide, API behavior, and current limitations.
 - `src/kernel/drivers/console/` contains VGA text output.
 - `src/kernel/drivers/keyboard/` contains BIOS-backed keyboard input.
 - `src/kernel/mm/` contains the fixed first-fit heap allocator.
+- `src/kernel/syscall/` contains the software-interrupt entry and syscall ABI.
 - `docs/` contains feature and API documentation.
 - `linker/` contains linker scripts.
 - `build.sh` assembles, links, creates the disk image, and launches QEMU.
@@ -48,7 +53,6 @@ These directories will be added when their implementation begins:
 
 | Architecture task | Planned location |
 | --- | --- |
-| System call interface | `src/kernel/syscall/` |
 | Process model and scheduling | `src/kernel/process/` |
 | RAM/on-disk filesystem | `src/kernel/fs/` |
 | User-mode shell | `src/user/shell/` |
