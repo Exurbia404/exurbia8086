@@ -18,8 +18,9 @@ keyboard input.
   shutdown of the QEMU process.
 
 Other input is currently echoed rather than interpreted as a command. There is
-no process model, user account, privilege system, or shell yet; the prompt is
-the kernel's own input loop.
+no user account, privilege system, or user-mode shell yet. The prompt is a
+kernel task scheduled cooperatively with two short-lived demonstration tasks;
+see [process-model.md](process-model.md).
 
 ## VGA console
 
@@ -93,5 +94,5 @@ Run `./build.sh` from any working directory. It builds the floppy image in
 `build/` and launches QEMU. Type a line, use Backspace to edit it, and press
 Enter to submit. Enter `exit` to close QEMU normally.
 
-The boot sector currently loads only the first 4096 bytes of the kernel.
+The boot sector currently loads only the first 8192 bytes of the kernel.
 `build.sh` checks this limit as well as the 512-byte boot-sector size.

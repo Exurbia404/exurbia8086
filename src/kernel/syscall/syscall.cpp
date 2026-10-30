@@ -2,6 +2,7 @@
 
 #include "../drivers/console/console.h"
 #include "../drivers/keyboard/keyboard.h"
+#include "../process/process.h"
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -115,7 +116,13 @@ extern "C" short syscall_dispatch_frame(SystemCallFrame* frame) {
     case SYS_FORK:
         result = SYS_ERROR_NOT_IMPLEMENTED;
         break;
+    case SYS_YIELD:
+        process_yield();
+        result = 0;
+        break;
     case SYS_EXIT:
+        if (process_current_id())
+            process_exit_current(frame->bx);
 #ifdef EXURBIA_QEMU
         __asm__ volatile (
             "outb %0, %1"
@@ -159,6 +166,10 @@ short syscall_close(unsigned short file_descriptor) {
 
 short syscall_fork() {
     return invoke_syscall(SYS_FORK, 0, 0, 0);
+}
+
+short syscall_yield() {
+    return invoke_syscall(SYS_YIELD, 0, 0, 0);
 }
 
 void syscall_exit(unsigned short status) {

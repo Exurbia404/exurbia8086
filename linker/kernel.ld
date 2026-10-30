@@ -12,4 +12,6 @@ SECTIONS
     }
     .data : { *(.data) }
     .bss  : { *(.bss) }
+    __kernel_end = .;
+    ASSERT(__kernel_end <= 0x4000, "kernel and BSS overlap the heap")
 }

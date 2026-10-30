@@ -1,5 +1,6 @@
 #include "../drivers/console/console.h"
 #include "../mm/heap.h"
+#include "../process/process.h"
 #include "../syscall/syscall.h"
 
 static char line[80];
@@ -100,47 +101,39 @@ static void syscall_self_test() {
         syscall_close(0) != SYS_ERROR_NOT_IMPLEMENTED ||
         syscall_fork() != SYS_ERROR_NOT_IMPLEMENTED)
         fail("Unsupported system call handling failed.\n");
+    if (syscall_yield() != 0)
+        fail("System call yield validation failed.\n");
 
     ksetcolor(10, 0);
     kputs("System call self-test passed.\n");
     ksetcolor(15, 0);
 }
 
-extern "C" __attribute__((section(".text.start"))) void _start() {
-    console_init();
-    if (!memory_init()) {
-        kputs("Memory initialization failed.\n");
-        halt_system();
+static void cooperative_worker_a() {
+    static const char message[] = "[task A] running\n";
+    for (unsigned short step = 0; step < 3; ++step) {
+        if (syscall_write(
+                1, reinterpret_cast<unsigned short>(message), sizeof(message) - 1
+            ) != sizeof(message) - 1)
+            fail("Task A write failed.\n");
+        if (syscall_yield() != 0)
+            fail("Task A yield failed.\n");
     }
-    if (!syscall_init()) {
-        kputs("System call initialization failed.\n");
-        halt_system();
+}
+
+static void cooperative_worker_b() {
+    static const char message[] = "[task B] running\n";
+    for (unsigned short step = 0; step < 3; ++step) {
+        if (syscall_write(
+                1, reinterpret_cast<unsigned short>(message), sizeof(message) - 1
+            ) != sizeof(message) - 1)
+            fail("Task B write failed.\n");
+        if (syscall_yield() != 0)
+            fail("Task B yield failed.\n");
     }
+}
 
-    ksetcolor(15, 0);
-    kputs("exurbia8086 console\n");
-    kputs("BIOS keyboard input, line editing enabled.\n");
-
-    MemoryStats memory;
-    if (!memory_get_stats(&memory)) {
-        kputs("Heap metadata is invalid.\n");
-        halt_system();
-    }
-    kputs("Heap: ");
-    print_unsigned(memory.total_bytes);
-    kputs(" bytes available.\n");
-
-#ifdef EXURBIA_QEMU
-    if (!memory_self_test()) {
-        ksetcolor(12, 0);
-        kputs("Memory allocator self-test failed.\n");
-        halt_system();
-    }
-    ksetcolor(10, 0);
-    kputs("Memory allocator self-test passed.\n");
-#endif
-    syscall_self_test();
-
+static void shell_task() {
     while (1) {
         ksetcolor(11, 0);
         short prompt_result = syscall_write(
@@ -196,5 +189,57 @@ extern "C" __attribute__((section(".text.start"))) void _start() {
             fail("System call newline returned an unexpected result.\n");
         }
         ksetcolor(15, 0);
+        if (syscall_yield() != 0)
+            fail("Shell task yield failed.\n");
     }
+}
+
+extern "C" __attribute__((section(".text.start"))) void _start() {
+    console_init();
+    if (!memory_init()) {
+        kputs("Memory initialization failed.\n");
+        halt_system();
+    }
+    if (!syscall_init()) {
+        kputs("System call initialization failed.\n");
+        halt_system();
+    }
+
+    ksetcolor(15, 0);
+    kputs("exurbia8086 console\n");
+    kputs("BIOS keyboard input, line editing enabled.\n");
+
+    MemoryStats memory;
+    if (!memory_get_stats(&memory)) {
+        kputs("Heap metadata is invalid.\n");
+        halt_system();
+    }
+    kputs("Heap: ");
+    print_unsigned(memory.total_bytes);
+    kputs(" bytes available.\n");
+
+#ifdef EXURBIA_QEMU
+    if (!memory_self_test()) {
+        ksetcolor(12, 0);
+        kputs("Memory allocator self-test failed.\n");
+        halt_system();
+    }
+    ksetcolor(10, 0);
+    kputs("Memory allocator self-test passed.\n");
+#endif
+    syscall_self_test();
+
+    if (!process_init())
+        fail("Process initialization failed.\n");
+    if (process_create(cooperative_worker_a) < 0 ||
+        process_create(cooperative_worker_b) < 0 ||
+        process_create(shell_task) < 0 ||
+        process_create(shell_task) >= 0)
+        fail("Process creation self-test failed.\n");
+    ksetcolor(10, 0);
+    kputs("Process model self-test passed.\n");
+    ksetcolor(15, 0);
+
+    process_start();
+    syscall_exit(0);
 }
